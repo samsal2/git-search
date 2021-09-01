@@ -1,25 +1,54 @@
-import logo from './logo.svg';
+import React, { useState, Fragment } from "react";
+import axios from "axios"
+
+import Navbar from "./components/Navbar"
+import { BrowserRouter, Switch, Route } from "react-router-dom"
+import UserGrid from "./components/UserGrid"
+import Search from "./components/Search"
+import Alert from "./components/Alert"
+import About from "./components/About"
 import './App.css';
 
-function App() {
+const App = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState(null);
+
+  const searchUsers = async (text) => {
+    setLoading(true);
+    const response = await axios.get(
+      `https://api.github.com/search/users` +
+      `?q=${text}` +
+      `&client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}` +
+      `&client_secret=${process.env.REACT_APP_GITHUB_CLIENT_SECRET}`);
+    setLoading(false);
+    setUsers(response.data.items);
+  };
+
+  const clearUsers = () => {
+    setLoading(false);
+    setUsers([]);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Navbar />
+        <div className="container">
+          <Alert alert={alert} />
+          <Switch>
+            <Route exact path="/" render={props => {
+              return (<Fragment>
+                <Search searchCall={searchUsers} clearCall={clearUsers} showClear={users.length > 0} setAlert={setAlert} />
+                <UserGrid users={users} loading={loading} />
+              </Fragment>);
+            }} />
+            <Route exact path="/about" render={About} />
+          </Switch>
+        </div>
+      </div>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;
